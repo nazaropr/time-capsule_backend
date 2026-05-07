@@ -14,7 +14,12 @@ export class User {
   @Prop({ required: true, select: false })
   password: string;
 
+  @Prop({ select: false, default: null })
+  hashedRefreshToken: string;
+
   createdAt: Date;
+
+
 }
 
 export const userSchema = SchemaFactory.createForClass(User);

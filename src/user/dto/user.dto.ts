@@ -27,3 +27,12 @@ export class UserResponseDto {
     this.createdAt = user.createdAt.toISOString();
   }
 }
+
+export class LoginUserDto {
+  @IsEmail()
+  email: string
+  @IsString()
+  @MinLength(8)
+  password: string
+}
+

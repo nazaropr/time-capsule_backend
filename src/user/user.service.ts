@@ -9,15 +9,23 @@ import * as bcrypt from 'bcrypt';
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).exec();
+  async findById(userId: string): Promise<UserDocument | null> {
+    return this.userModel.findById(userId).exec();
+  }
+
+  async findByEmailWithPassword(email: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ email }).select('+password').exec();
+  }
+
+  async findByIdWithRefreshToken(userId: string): Promise<UserDocument | null> {
+    return this.userModel.findById(userId).select('+hashedRefreshToken').exec();
   }
 
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     try {
       const { password, ...rest } = createUserDto;
-      const salt = await bcrypt.genSalt(10);
-      const hashedPass = await bcrypt.hash(password, salt);
+
+      const hashedPass = await bcrypt.hash(password, 10);
       const newUser = new this.userModel({
         ...rest,
         password: hashedPass,
@@ -29,5 +37,11 @@ export class UserService {
       }
       throw error;
     }
+  }
+
+  async updateRefreshToken(userId: string, hashedToken: string | null) {
+    return this.userModel.findByIdAndUpdate(userId, {
+      hashedRefreshToken: hashedToken,
+    });
   }
 }

@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   Req,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from '@app/auth/auth.service';
 import {
@@ -13,8 +15,11 @@ import {
   LoginUserDto,
 } from '@app/user/dto/user.dto';
 import type { Request, Response } from 'express';
-import { ITokens, JwtPayload } from '@app/auth/interface/JwtPayload';
+import { ITokens } from '@app/auth/interface/JwtPayload';
+import type { JwtPayload } from '@app/auth/interface/JwtPayload';
 import { JwtService } from '@nestjs/jwt';
+import { AuthGuard } from '@app/auth/guards/auth.guard';
+import { GetUser } from '@app/auth/decorators/user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -71,6 +76,12 @@ export class AuthController {
     res.clearCookie('access_token');
     res.clearCookie('refresh_token', { path: '/auth/refresh' });
     return { message: 'Logged out' };
+  }
+
+  @Get('me')
+  @UseGuards(AuthGuard)
+  GetMe(@GetUser() user: JwtPayload) {
+    return user;
   }
 
   private setAuthCookies(res: Response, tokens: ITokens) {

@@ -18,8 +18,8 @@ import type { Request, Response } from 'express';
 import { ITokens } from '@app/auth/interface/JwtPayload';
 import type { JwtPayload } from '@app/auth/interface/JwtPayload';
 import { JwtService } from '@nestjs/jwt';
-import { AuthGuard } from '@app/auth/guards/auth.guard';
 import { GetUser } from '@app/auth/decorators/user.decorator';
+import { Public } from '@app/auth/decorators/public.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -29,12 +29,14 @@ export class AuthController {
   ) {}
 
   @Post('sign-up')
+  @Public()
   async signUp(@Body() user: CreateUserDto): Promise<UserResponseDto> {
     const response = await this.authService.signUp(user);
     return new UserResponseDto(response);
   }
 
   @Post('sign-in')
+  @Public()
   async signIn(
     @Body() user: LoginUserDto,
     @Res({ passthrough: true }) res: Response,
@@ -46,6 +48,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Public()
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -79,7 +82,6 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(AuthGuard)
   GetMe(@GetUser() user: JwtPayload) {
     return user;
   }

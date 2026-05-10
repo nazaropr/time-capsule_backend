@@ -18,8 +18,6 @@ export class User {
   hashedRefreshToken: string;
 
   createdAt: Date;
-
-
 }
 
 export const userSchema = SchemaFactory.createForClass(User);

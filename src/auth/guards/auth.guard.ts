@@ -6,35 +6,46 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { Observable } from 'rxjs';
+import { Reflector } from '@nestjs/core';
 import { JwtPayload } from '@app/auth/interface/JwtPayload';
 import { AuthRequest } from '@app/auth/interface/auth-req.interface';
+import { IS_PUBLIC_KEY } from '@app/auth/decorators/public.decorator';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly reflector: Reflector,
   ) {}
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
     const request = context.switchToHttp().getRequest<AuthRequest>();
     const access_token = request.cookies?.['access_token'] as
       | string
       | undefined;
+
     if (!access_token) {
+      if (isPublic) return true;
       throw new UnauthorizedException('No access token');
     }
-    let payload: JwtPayload;
+
     try {
-      payload = this.jwtService.verify<JwtPayload>(access_token, {
-        secret: this.configService.get('JWT_ACCESS_SECRET'),
-      });
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(
+        access_token,
+        {
+          secret: this.configService.get('JWT_ACCESS_SECRET'),
+        },
+      );
       request.user = payload;
       return true;
     } catch (e) {
-      console.error(e);
+      if (isPublic) return true;
       throw new UnauthorizedException('Invalid access token');
     }
   }

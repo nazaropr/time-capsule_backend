@@ -30,6 +30,8 @@ export class Capsule {
   isPublic: boolean;
   @Prop({ type: [RecipientSchema], default: [] })
   recipients: Recipient[];
+  @Prop({ required: true, unique: true })
+  slug: string;
 
   createdAt: Date;
 }

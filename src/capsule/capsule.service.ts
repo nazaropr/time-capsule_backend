@@ -4,11 +4,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateCapsuleDto } from '@app/capsule/dto/capsule.dto';
+import {
+  CreateCapsuleDto,
+  UpdateCapsuleDto,
+} from '@app/capsule/dto/capsule.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Capsule, CapsuleDocument } from '@app/capsule/schemas/capsule.schema';
 import { Model } from 'mongoose';
 import { CryptoService } from '@app/common/crypto/crypto.service';
+import { nanoid } from 'nanoid';
 
 export interface FindOneResult {
   capsule: CapsuleDocument;
@@ -36,6 +40,7 @@ export class CapsuleService {
       unlockAt: unlockDate,
       content: encryptedContent,
       owner: userId,
+      slug: nanoid(10),
     });
     return await newCapsule.save();
   }
@@ -62,6 +67,84 @@ export class CapsuleService {
       decryptedContent = this.cryptoService.decrypt(capsule.content);
     }
 
+    return { capsule, decryptedContent };
+  }
+
+  async update(
+    id: string,
+    userId: string,
+    dto: UpdateCapsuleDto,
+  ): Promise<CapsuleDocument> {
+    const capsule = await this.capsuleModel.findById(id);
+
+    if (!capsule) {
+      throw new NotFoundException('Capsule not found');
+    }
+    if (capsule.owner.toString() !== userId) {
+      throw new ForbiddenException('You are not owner');
+    }
+
+    if (capsule.isUnlocked) {
+      throw new BadRequestException('Cannot edit unlocked capsule');
+    }
+    const { title, content, unlockAt, isPublic, recipients } = dto;
+
+    if (title !== undefined) {
+      capsule.title = title;
+    }
+
+    if (isPublic !== undefined) {
+      capsule.isPublic = isPublic;
+    }
+
+    if (unlockAt !== undefined) {
+      const newDate = new Date(unlockAt);
+      if (newDate <= new Date()) {
+        throw new BadRequestException('Unlock date must be in the future');
+      }
+      capsule.unlockAt = newDate;
+    }
+
+    if (content !== undefined) {
+      capsule.content = this.cryptoService.encrypt(content);
+    }
+
+    if (recipients !== undefined) {
+      capsule.recipients = recipients.map((recipient) => ({
+        email: recipient.email,
+        isNotified: false,
+      }));
+    }
+
+    return await capsule.save();
+  }
+
+  async delete(id: string, userId: string): Promise<void> {
+    const capsule = await this.capsuleModel.findById(id);
+
+    if (!capsule) throw new NotFoundException('Capsule not found');
+    if (capsule.owner.toString() !== userId) {
+      throw new ForbiddenException('Only owner can delete this capsule');
+    }
+    //todo каскадне видалення deleteAllByCapsule(id);
+
+    await this.capsuleModel.findByIdAndDelete(id);
+  }
+
+  async findOneBySlug(slug: string): Promise<FindOneResult> {
+    const capsule = await this.capsuleModel
+      .findOne({ slug })
+      .select('+content')
+      .exec();
+    if (!capsule) {
+      throw new NotFoundException('Capsule not found');
+    }
+
+    if (!capsule.isPublic || !capsule.isUnlocked) {
+      throw new ForbiddenException('This capsule is private or still locked');
+    }
+
+    const decryptedContent = this.cryptoService.decrypt(capsule.content);
     return { capsule, decryptedContent };
   }
 }

@@ -42,6 +42,7 @@ export class CapsuleResponseDto {
   createdAt: string;
   isPublic: boolean;
   isUnlocked: boolean;
+  slug: string;
 
   constructor(capsule: CapsuleDocument) {
     this.id = capsule.id;
@@ -51,6 +52,7 @@ export class CapsuleResponseDto {
     this.recipients = capsule.recipients;
     this.isPublic = capsule.isPublic;
     this.isUnlocked = capsule.isUnlocked;
+    this.slug = capsule.slug;
   }
 }
 
@@ -60,4 +62,30 @@ export class CapsuleWithContentDto extends CapsuleResponseDto {
     super(capsule);
     this.content = decryptedContent;
   }
+}
+
+export class UpdateCapsuleDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  content?: string;
+
+  @IsOptional()
+  @IsDateString()
+  unlockAt?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isPublic?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateRecipientDto)
+  recipients?: CreateRecipientDto[];
 }

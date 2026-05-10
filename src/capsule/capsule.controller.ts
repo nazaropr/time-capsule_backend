@@ -1,9 +1,18 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { CapsuleService } from '@app/capsule/capsule.service';
 import {
   CapsuleResponseDto,
   CapsuleWithContentDto,
   CreateCapsuleDto,
+  UpdateCapsuleDto,
 } from '@app/capsule/dto/capsule.dto';
 import { GetUser } from '@app/auth/decorators/user.decorator';
 import type { JwtPayload } from '@app/auth/interface/JwtPayload';
@@ -37,6 +46,37 @@ export class CapsuleController {
     @Param('id') id: string,
   ): Promise<CapsuleWithContentDto> {
     const response = await this.capsuleService.findOne(id, user?.sub);
+    return new CapsuleWithContentDto(
+      response.capsule,
+      response.decryptedContent,
+    );
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() body: UpdateCapsuleDto,
+    @GetUser() user: JwtPayload,
+  ): Promise<CapsuleResponseDto> {
+    const response = await this.capsuleService.update(id, user.sub, body);
+    return new CapsuleResponseDto(response);
+  }
+
+  @Delete(':id')
+  async delete(
+    @Param('id') id: string,
+    @GetUser() user: JwtPayload,
+  ): Promise<{ message: string }> {
+    await this.capsuleService.delete(id, user.sub);
+    return { message: 'Capsule deleted successfully' };
+  }
+
+  @Get('p/:slug')
+  @Public()
+  async findBySlug(
+    @Param('slug') slug: string,
+  ): Promise<CapsuleWithContentDto> {
+    const response = await this.capsuleService.findOneBySlug(slug);
     return new CapsuleWithContentDto(
       response.capsule,
       response.decryptedContent,

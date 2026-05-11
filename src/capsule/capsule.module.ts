@@ -14,5 +14,6 @@ import { JwtService } from '@nestjs/jwt';
   ],
   providers: [CapsuleService, JwtService, AuthGuard],
   controllers: [CapsuleController],
+  exports: [CapsuleService],
 })
 export class CapsuleModule {}

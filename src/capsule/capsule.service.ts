@@ -147,4 +147,24 @@ export class CapsuleService {
     const decryptedContent = this.cryptoService.decrypt(capsule.content);
     return { capsule, decryptedContent };
   }
+
+  async findCapsuleToUnlock(): Promise<CapsuleDocument[]> {
+    const now = new Date();
+
+    return await this.capsuleModel
+      .find({
+        unlockAt: { $lte: now },
+        isUnlocked: false,
+      })
+      .exec();
+  }
+
+  async findAllReceived(email: string): Promise<CapsuleDocument[]> {
+    return await this.capsuleModel
+      .find({
+        'recipients.email': email,
+        isUnlocked: true,
+      })
+      .exec();
+  }
 }

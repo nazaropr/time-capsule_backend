@@ -82,4 +82,12 @@ export class CapsuleController {
       response.decryptedContent,
     );
   }
+
+  @Get('received')
+  async findAllReceived(
+    @GetUser() user: JwtPayload,
+  ): Promise<CapsuleResponseDto[]> {
+    const response = await this.capsuleService.findAllReceived(user.email);
+    return response.map((capsule) => new CapsuleResponseDto(capsule));
+  }
 }

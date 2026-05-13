@@ -42,6 +42,11 @@ export class AuthGuard implements CanActivate {
           secret: this.configService.get('JWT_ACCESS_SECRET'),
         },
       );
+
+      if (!payload || !payload.sub || !payload.email) {
+        throw new UnauthorizedException('Invalid token payload');
+      }
+
       request.user = payload;
       return true;
     } catch (e) {

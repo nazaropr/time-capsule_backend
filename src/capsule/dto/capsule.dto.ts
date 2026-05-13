@@ -69,20 +69,16 @@ export class UpdateCapsuleDto {
   @IsString()
   @IsNotEmpty()
   title?: string;
-
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   content?: string;
-
   @IsOptional()
   @IsDateString()
   unlockAt?: string;
-
   @IsOptional()
   @IsBoolean()
   isPublic?: boolean;
-
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

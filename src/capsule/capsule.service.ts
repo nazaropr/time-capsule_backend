@@ -32,6 +32,8 @@ export class CapsuleService {
     const { content, unlockAt, ...rest } = dto;
     const encryptedContent = this.cryptoService.encrypt(content);
     const unlockDate = new Date(unlockAt);
+    unlockDate.setUTCHours(0, 0, 0, 0);
+
     if (unlockDate <= new Date()) {
       throw new BadRequestException('Unlock date must be in the future');
     }
@@ -99,6 +101,8 @@ export class CapsuleService {
 
     if (unlockAt !== undefined) {
       const newDate = new Date(unlockAt);
+      newDate.setUTCHours(0, 0, 0, 0);
+
       if (newDate <= new Date()) {
         throw new BadRequestException('Unlock date must be in the future');
       }
@@ -126,7 +130,6 @@ export class CapsuleService {
     if (capsule.owner.toString() !== userId) {
       throw new ForbiddenException('Only owner can delete this capsule');
     }
-    //todo каскадне видалення deleteAllByCapsule(id);
 
     await this.capsuleModel.findByIdAndDelete(id);
   }
@@ -166,5 +169,9 @@ export class CapsuleService {
         isUnlocked: true,
       })
       .exec();
+  }
+
+  async deleteAllByUserId(userId: string): Promise<void> {
+    await this.capsuleModel.deleteMany({ owner: userId }).exec();
   }
 }

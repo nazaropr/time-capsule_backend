@@ -18,7 +18,7 @@ export class MailService {
     });
   }
   async sendNotification(email: string, title: string, slug: string) {
-    const url = `${this.configService.get<string>('NEXT_PUBLIC_API_URL')}/p/${slug}`;
+    const url = `${this.configService.get<string>('NEXT_PUBLIC_API_URL')}/public/${slug}`;
 
     await this.transporter.sendMail({
       from: 'Time Capsule <no-reply@timecapsule.com>',

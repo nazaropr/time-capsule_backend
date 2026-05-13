@@ -18,7 +18,7 @@ import { GetUser } from '@app/auth/decorators/user.decorator';
 import type { JwtPayload } from '@app/auth/interface/JwtPayload';
 import { Public } from '@app/auth/decorators/public.decorator';
 
-@Controller('capsule')
+@Controller('capsules')
 export class CapsuleController {
   constructor(private readonly capsuleService: CapsuleService) {}
   @Post()
@@ -30,13 +30,33 @@ export class CapsuleController {
     return new CapsuleResponseDto(response);
   }
 
-  @Get('my')
+  @Get()
   async findAll(@GetUser() user: JwtPayload): Promise<CapsuleResponseDto[]> {
     const response = await this.capsuleService.findAllByUserId(user.sub);
 
     return response.map((capsule) => {
       return new CapsuleResponseDto(capsule);
     });
+  }
+
+  @Get('received')
+  async findAllReceived(
+    @GetUser() user: JwtPayload,
+  ): Promise<CapsuleResponseDto[]> {
+    const response = await this.capsuleService.findAllReceived(user.email);
+    return response.map((capsule) => new CapsuleResponseDto(capsule));
+  }
+
+  @Get('public/:slug')
+  @Public()
+  async findBySlug(
+    @Param('slug') slug: string,
+  ): Promise<CapsuleWithContentDto> {
+    const response = await this.capsuleService.findOneBySlug(slug);
+    return new CapsuleWithContentDto(
+      response.capsule,
+      response.decryptedContent,
+    );
   }
 
   @Get(':id')
@@ -69,25 +89,5 @@ export class CapsuleController {
   ): Promise<{ message: string }> {
     await this.capsuleService.delete(id, user.sub);
     return { message: 'Capsule deleted successfully' };
-  }
-
-  @Get('p/:slug')
-  @Public()
-  async findBySlug(
-    @Param('slug') slug: string,
-  ): Promise<CapsuleWithContentDto> {
-    const response = await this.capsuleService.findOneBySlug(slug);
-    return new CapsuleWithContentDto(
-      response.capsule,
-      response.decryptedContent,
-    );
-  }
-
-  @Get('received')
-  async findAllReceived(
-    @GetUser() user: JwtPayload,
-  ): Promise<CapsuleResponseDto[]> {
-    const response = await this.capsuleService.findAllReceived(user.email);
-    return response.map((capsule) => new CapsuleResponseDto(capsule));
   }
 }

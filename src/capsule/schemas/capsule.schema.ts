@@ -32,7 +32,6 @@ export class Capsule {
   recipients: Recipient[];
   @Prop({ required: true, unique: true })
   slug: string;
-
   createdAt: Date;
 }
 

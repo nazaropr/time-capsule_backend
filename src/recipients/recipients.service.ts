@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { CapsuleService } from '@app/capsule/capsule.service';
 import { CreateRecipientDto } from '@app/capsule/dto/capsule.dto';
@@ -52,6 +53,12 @@ export class RecipientsService {
         'Cannot remove recipients from an unlocked capsule',
       );
     }
+
+    const recipientExists = capsule.recipients.some((r) => r.email === email);
+    if (!recipientExists) {
+      throw new NotFoundException(`Recipient with email ${email} not found`);
+    }
+
     capsule.recipients = capsule.recipients.filter((r) => r.email !== email);
     return await capsule.save();
   }

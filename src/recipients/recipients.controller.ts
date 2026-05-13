@@ -7,7 +7,7 @@ import type { JwtPayload } from '@app/auth/interface/JwtPayload';
 import { RecipientsService } from '@app/recipients/recipients.service';
 import { GetUser } from '@app/auth/decorators/user.decorator';
 
-@Controller('capsules/:id/recipients')
+@Controller('capsule/:id/recipients')
 export class RecipientsController {
   constructor(private readonly recipientsService: RecipientsService) {}
   @Post()

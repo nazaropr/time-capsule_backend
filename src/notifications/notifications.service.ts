@@ -11,7 +11,7 @@ export class NotificationsService {
     private readonly mailService: MailService,
   ) {}
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleCron() {
     this.logger.debug('Cron called for searching capsules');
 

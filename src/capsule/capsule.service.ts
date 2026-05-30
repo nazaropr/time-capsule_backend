@@ -13,6 +13,7 @@ import { Capsule, CapsuleDocument } from '@app/capsule/schemas/capsule.schema';
 import { Model } from 'mongoose';
 import { CryptoService } from '@app/common/crypto/crypto.service';
 import { nanoid } from 'nanoid';
+import { JwtPayload } from '@app/auth/interface/JwtPayload';
 
 export interface FindOneResult {
   capsule: CapsuleDocument;
@@ -50,7 +51,10 @@ export class CapsuleService {
   async findAllByUserId(userId: string): Promise<CapsuleDocument[]> {
     return await this.capsuleModel.find({ owner: userId }).exec();
   }
-  async findOne(id: string, userId?: string): Promise<FindOneResult> {
+  async findOne(
+    id: string,
+    userOrId?: JwtPayload | string,
+  ): Promise<FindOneResult> {
     const capsule = await this.capsuleModel
       // .findOne({ _id: id, owner: userId })
       .findById(id)
@@ -59,15 +63,40 @@ export class CapsuleService {
     if (!capsule) {
       throw new NotFoundException('Unable to find capsule');
     }
+    const userId = typeof userOrId === 'string' ? userOrId : userOrId?.sub;
+    const userEmail = typeof userOrId === 'string' ? null : userOrId?.email;
 
     const isOwner = capsule.owner.toString() === userId;
-    if (!isOwner && !capsule.isPublic) {
+
+    const isRecipient = capsule.recipients.some(
+      (recipient) => recipient.email === userEmail,
+    );
+
+    if (!isOwner && !isRecipient && !capsule.isPublic) {
       throw new ForbiddenException('Access denied for the capsule');
     }
     let decryptedContent: string | null = null;
     if (capsule.isUnlocked) {
       decryptedContent = this.cryptoService.decrypt(capsule.content);
     }
+
+    return { capsule, decryptedContent };
+  }
+
+  async findOneToEdit(id: string, userId: string): Promise<FindOneResult> {
+    const capsule = await this.capsuleModel
+      .findById(id)
+      .select('+content')
+      .exec();
+    if (!capsule) {
+      throw new NotFoundException('Unable to find capsule');
+    }
+
+    const isOwner = capsule.owner.toString() === userId;
+    if (!isOwner) {
+      throw new ForbiddenException('Access denied for the capsule');
+    }
+    const decryptedContent = this.cryptoService.decrypt(capsule.content);
 
     return { capsule, decryptedContent };
   }

@@ -31,7 +31,9 @@ export class AuthGuard implements CanActivate {
       | undefined;
 
     if (!access_token) {
-      if (isPublic) return true;
+      if (isPublic) {
+        return true;
+      }
       throw new UnauthorizedException('No access token');
     }
 

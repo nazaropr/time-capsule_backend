@@ -36,6 +36,7 @@ export class CreateRecipientDto {
 
 export class CapsuleResponseDto {
   id: string;
+  owner: string;
   title: string;
   unlockAt: string;
   recipients: CreateRecipientDto[];
@@ -46,6 +47,7 @@ export class CapsuleResponseDto {
 
   constructor(capsule: CapsuleDocument) {
     this.id = capsule.id;
+    this.owner = capsule.owner.toString();
     this.title = capsule.title;
     this.unlockAt = capsule.unlockAt.toISOString();
     this.createdAt = capsule.createdAt.toISOString();

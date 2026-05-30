@@ -65,7 +65,19 @@ export class CapsuleController {
     @GetUser() user: JwtPayload | undefined,
     @Param('id') id: string,
   ): Promise<CapsuleWithContentDto> {
-    const response = await this.capsuleService.findOne(id, user?.sub);
+    const response = await this.capsuleService.findOne(id, user);
+    return new CapsuleWithContentDto(
+      response.capsule,
+      response.decryptedContent,
+    );
+  }
+
+  @Get(':id/edit')
+  async findOneToEdit(
+    @Param('id') id: string,
+    @GetUser() user: JwtPayload,
+  ): Promise<CapsuleWithContentDto> {
+    const response = await this.capsuleService.findOneToEdit(id, user?.sub);
     return new CapsuleWithContentDto(
       response.capsule,
       response.decryptedContent,

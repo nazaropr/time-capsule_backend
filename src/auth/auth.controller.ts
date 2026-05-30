@@ -68,13 +68,29 @@ export class AuthController {
   @Post('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const accessToken = req.cookies['access_token'] as string | undefined;
-    if (!accessToken) {
-      throw new UnauthorizedException('No access token');
+    const refreshToken = req.cookies['refresh_token'] as string | undefined;
+
+    try {
+      let userId: string | null = null;
+
+      if (accessToken) {
+        const payload = this.jwtService.decode<JwtPayload>(accessToken);
+        userId = payload?.sub;
+      } else if (refreshToken) {
+        const payload = this.jwtService.decode<JwtPayload>(refreshToken);
+        userId = payload?.sub;
+      }
+
+      if (userId) {
+        await this.authService.logout(userId);
+      }
+    } catch (e) {
+      console.error('Logout cleanup failed:', e);
     }
-    const payload = this.jwtService.decode<JwtPayload>(accessToken);
-    await this.authService.logout(payload.sub);
+
     res.clearCookie('access_token');
-    res.clearCookie('refresh_token', { path: '/auth/refresh' });
+    res.clearCookie('refresh_token');
+    // { path: '/auth/refresh' });
     return { message: 'Logged out' };
   }
 
@@ -84,13 +100,15 @@ export class AuthController {
       secure: false,
       sameSite: 'lax',
       maxAge: 15 * 60 * 1000,
+      path: '/',
     });
     res.cookie('refresh_token', tokens.refresh_token, {
       httpOnly: true,
       secure: false,
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/auth/refresh',
+      // path: '/auth/refresh',
+      path: '/',
     });
   }
 }
